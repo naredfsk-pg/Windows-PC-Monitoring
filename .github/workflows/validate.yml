@@ -1,0 +1,40 @@
+name: Validate core assets
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-local:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate PowerShell 5.1 and core repository assets
+        shell: powershell
+        run: ./tests/Invoke-Checks.ps1 -Stage Core
+      - name: Validate recording rules with checksum-pinned promtool
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content -Raw config/dependencies.lock.json | ConvertFrom-Json
+          $component = @($manifest.components | Where-Object { $_.id -eq 'prometheus' })
+          if ($component.Count -ne 1) { throw 'Expected one pinned Prometheus component.' }
+          $archivePath = Join-Path $env:RUNNER_TEMP 'pc-monitor-prometheus.zip'
+          $extractPath = Join-Path $env:RUNNER_TEMP 'pc-monitor-prometheus'
+          Invoke-WebRequest -UseBasicParsing -Uri $component[0].url -OutFile $archivePath -TimeoutSec 120
+          if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash -ne $component[0].sha256) { throw 'Prometheus archive checksum mismatch.' }
+          Expand-Archive -LiteralPath $archivePath -DestinationPath $extractPath
+          $tools = @(Get-ChildItem -LiteralPath $extractPath -Filter promtool.exe -Recurse -File)
+          if ($tools.Count -ne 1) { throw 'Expected exactly one promtool executable.' }
+          & $tools[0].FullName check rules config/recording-rules/core.yml
+          if ($LASTEXITCODE -ne 0) { throw 'Recording rule validation failed.' }
+          & $tools[0].FullName test rules tests/prometheus/core.test.yml
+          if ($LASTEXITCODE -ne 0) { throw 'Recording rule fixtures failed.' }

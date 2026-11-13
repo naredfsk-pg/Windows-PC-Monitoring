@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PC Monitor effective non-secret configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["Profile", "InstallRoot", "DataRoot", "GrafanaPort", "PrometheusPort", "ExporterPort", "ScrapeInterval", "RetentionTime", "RetentionSize", "PublicHostname", "GrafanaUrl", "Timezone", "ProcessInclude", "ProcessExclude"],
+  "properties": {
+    "Profile": { "enum": ["local", "owner"] },
+    "InstallRoot": { "type": "string", "pattern": "^[A-Za-z]:[\\\\/]" },
+    "DataRoot": { "type": "string", "pattern": "^[A-Za-z]:[\\\\/]" },
+    "GrafanaPort": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "PrometheusPort": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "ExporterPort": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "ScrapeInterval": { "type": "string", "pattern": "^(?:[5-9]|[12][0-9]|30)s$" },
+    "RetentionTime": { "type": "string", "pattern": "^[1-9][0-9]*(h|d|w)$" },
+    "RetentionSize": { "type": "string", "pattern": "^[1-9][0-9]*(MB|GB|TB)$" },
+    "PublicHostname": { "type": "string" },
+    "GrafanaUrl": { "type": "string", "format": "uri" },
+    "Timezone": { "type": "string" },
+    "ProcessInclude": { "type": "string", "minLength": 1 },
+    "ProcessExclude": { "type": "string" }
+  }
+}

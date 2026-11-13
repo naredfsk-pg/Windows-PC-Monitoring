@@ -1,0 +1,38 @@
+groups:
+  - name: pc-monitor-core
+    rules:
+      - record: pc_monitor:cpu_logical_processors:count
+        expr: count by (job, instance) (windows_cpu_time_seconds_total{job="windows_exporter",mode="idle"})
+
+      - record: pc_monitor:cpu_usage:ratio
+        expr: 1 - avg by (job, instance) (rate(windows_cpu_time_seconds_total{job="windows_exporter",mode="idle"}[2m]))
+
+      - record: pc_monitor:memory_used:ratio
+        expr: 1 - windows_memory_available_bytes{job="windows_exporter"} / windows_memory_physical_total_bytes{job="windows_exporter"}
+
+      - record: pc_monitor:memory_used:bytes
+        expr: windows_memory_physical_total_bytes{job="windows_exporter"} - windows_memory_available_bytes{job="windows_exporter"}
+
+      # Suppress rates spanning an observed same-name/PID reuse in the window.
+      - record: pc_monitor:process_cpu_usage:cores
+        expr: |
+          sum by (job, instance, process, process_id) (
+            rate(windows_process_cpu_time_seconds_total{job="windows_exporter",process!~"^(Idle|_Total)$"}[2m])
+          )
+          and on (job, instance, process, process_id)
+          (changes(windows_process_start_time_seconds_timestamp{job="windows_exporter"}[2m]) == 0)
+
+      - record: pc_monitor:process_cpu_usage:ratio
+        expr: |
+          pc_monitor:process_cpu_usage:cores
+          / on (job, instance) group_left
+          pc_monitor:cpu_logical_processors:count
+
+      - record: pc_monitor:volume_free:ratio
+        expr: windows_logical_disk_free_bytes{job="windows_exporter"} / windows_logical_disk_size_bytes{job="windows_exporter"}
+
+      - record: pc_monitor:network_receive:bytes_per_second
+        expr: rate(windows_net_bytes_received_total{job="windows_exporter"}[2m])
+
+      - record: pc_monitor:network_transmit:bytes_per_second
+        expr: rate(windows_net_bytes_sent_total{job="windows_exporter"}[2m])

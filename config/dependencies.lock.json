@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "platform": "windows-x64",
+  "verifiedAt": "2026-11-13",
+  "validationState": "upstream-metadata-verified-runtime-pending",
+  "components": [
+    {
+      "id": "prometheus",
+      "version": "3.16.0",
+      "url": "https://github.com/prometheus/prometheus/releases/download/v3.16.0/prometheus-3.16.0.windows-amd64.zip",
+      "sha256": "89c03c2f24400fb58668440b6d7226f68564acda27d657e77acfbda42be32cb3",
+      "archiveType": "zip",
+      "executableRelativePath": "prometheus.exe",
+      "license": "Apache-2.0",
+      "serviceStrategy": "winsw"
+    },
+    {
+      "id": "windows_exporter",
+      "version": "0.32.1",
+      "url": "https://github.com/prometheus-community/windows_exporter/releases/download/v0.32.1/windows_exporter-0.32.1-amd64.exe",
+      "sha256": "da0e3d3bd45a32feed3ae966225a2892cf3fdbc0918cf6ea4971befa17295dea",
+      "archiveType": "exe",
+      "executableRelativePath": "windows_exporter.exe",
+      "license": "MIT",
+      "serviceStrategy": "winsw"
+    },
+    {
+      "id": "grafana",
+      "version": "13.3.1",
+      "url": "https://dl.grafana.com/grafana/release/13.3.1/grafana_13.3.1_42849527790_windows_amd64.tar.gz",
+      "sha256": "cb78dceb990948fe7f1a189a0737fa7f6cf212076fc139a57d48cbc45dc0393f",
+      "archiveType": "tar.gz",
+      "executableRelativePath": "bin/grafana.exe",
+      "license": "AGPL-3.0-only",
+      "serviceStrategy": "winsw"
+    },
+    {
+      "id": "winsw",
+      "version": "2.12.0",
+      "url": "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW.NET461.exe",
+      "sha256": "b5066b7bbdfba1293e5d15cda3caaea88fbeab35bd5b38c41c913d492aadfc4f",
+      "archiveType": "exe",
+      "executableRelativePath": "winsw.exe",
+      "license": "MIT",
+      "serviceStrategy": "wrapper"
+    }
+  ]
+}

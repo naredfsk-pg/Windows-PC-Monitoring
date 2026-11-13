@@ -1,0 +1,1105 @@
+{
+  "id": null,
+  "uid": "pc-monitor-processes",
+  "title": "PC Monitor / Process Explorer",
+  "description": "Search process/PID, inspect host-capacity CPU and resident/private memory. Names and PIDs are not immutable identities. Excludes command lines and usernames.",
+  "tags": [
+    "pc-monitor",
+    "windows",
+    "core"
+  ],
+  "timezone": "{{TIMEZONE}}",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "15s",
+      "30s",
+      "1m",
+      "5m"
+    ],
+    "time_options": [
+      "1h",
+      "6h",
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "top_n",
+        "label": "Top processes",
+        "type": "custom",
+        "query": "10,20,50",
+        "current": {
+          "text": "10",
+          "value": "10"
+        },
+        "options": [
+          {
+            "text": "10",
+            "value": "10",
+            "selected": true
+          },
+          {
+            "text": "20",
+            "value": "20",
+            "selected": false
+          },
+          {
+            "text": "50",
+            "value": "50",
+            "selected": false
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0,
+        "skipUrlSync": false
+      },
+      {
+        "name": "process",
+        "label": "Process name",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "pc-monitor-prometheus"
+        },
+        "query": {
+          "query": "label_values(windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process!~\"^(Idle|_Total)$\"}, process)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process!~\"^(Idle|_Total)$\"}, process)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [],
+        "hide": 0
+      },
+      {
+        "name": "pid",
+        "label": "PID",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "pc-monitor-prometheus"
+        },
+        "query": {
+          "query": "label_values(windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\"}, process_id)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\"}, process_id)",
+        "refresh": 1,
+        "sort": 3,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [],
+        "hide": 0
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "Overview",
+      "type": "link",
+      "url": "/d/pc-monitor-overview",
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Process Explorer",
+      "type": "link",
+      "url": "/d/pc-monitor-processes",
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "How to read this dashboard",
+      "type": "text",
+      "pluginVersion": "13.3.1",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Use the searchable **Process name** and **PID** selectors, then choose Top 10/20/50.\n\n**100% CPU = all host logical CPU capacity.** One busy thread is one core equivalent. CPU rates use two minutes and suppress an observed process restart in that window.\n\n**PID + name is not permanent identity.** Check process start time before interpreting history. Short-lived processes may be missed, and memory slopes across PID reuse are not a leak diagnosis. Top-N limits charts, not stored series."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Process CPU / host capacity",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "Two-minute CPU time divided by host logical processors; 100% means all host capacity.",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, pc_monitor:process_cpu_usage:ratio{instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\"})",
+          "legendFormat": "{{process}} / PID {{process_id}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Process CPU / core equivalents",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "One core equivalent means one fully occupied logical processor. This is not host percent.",
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, pc_monitor:process_cpu_usage:cores{instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\"})",
+          "legendFormat": "{{process}} / PID {{process_id}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Resident working set",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "Physical resident pages, including shared pages. Adding working sets can double-count memory.",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"})",
+          "legendFormat": "{{process}} / PID {{process_id}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Private resident working set",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "Resident physical pages private to this process; different from total private committed allocation.",
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, windows_process_working_set_private_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"})",
+          "legendFormat": "{{process}} / PID {{process_id}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Private committed allocation",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "Private committed virtual memory, not necessarily resident in RAM. A rising line alone is not proof of a leak.",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, windows_process_private_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"})",
+          "legendFormat": "{{process}} / PID {{process_id}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Resident working set / application name",
+      "type": "timeseries",
+      "pluginVersion": "13.3.1",
+      "description": "Sum of matching process working sets by name; shared resident pages can be counted repeatedly.",
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, sum by (process) (windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"}))",
+          "legendFormat": "{{process}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Current CPU ranking",
+      "type": "table",
+      "pluginVersion": "13.3.1",
+      "description": "Latest host-normalized rate by current name/PID. PID reuse can join historical lines after the guard window.",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Inspect this PID",
+                    "url": "/d/pc-monitor-processes?var-process=%24__all&var-pid=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Value",
+            "desc": true
+          }
+        ]
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, pc_monitor:process_cpu_usage:ratio{instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\"})",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "process": 0,
+              "process_id": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "process": "Process",
+              "process_id": "PID"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Current resident memory ranking",
+      "type": "table",
+      "pluginVersion": "13.3.1",
+      "description": "Current resident working set, including shared pages.",
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Inspect this PID",
+                    "url": "/d/pc-monitor-processes?var-process=%24__all&var-pid=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Value",
+            "desc": true
+          }
+        ]
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "topk(${top_n:raw}, windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"})",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "process": 0,
+              "process_id": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "process": "Process",
+              "process_id": "PID"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Process start time / identity check",
+      "type": "table",
+      "pluginVersion": "13.3.1",
+      "description": "Start timestamps for matching processes, ranked by resident working set. Different start times indicate distinct lifetimes even when PID/name are reused.",
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Inspect this PID",
+                    "url": "/d/pc-monitor-processes?var-process=%24__all&var-pid=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Value",
+            "desc": true
+          }
+        ]
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pc-monitor-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pc-monitor-prometheus"
+          },
+          "expr": "(windows_process_start_time_seconds_timestamp{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"} and on (job, instance, process, process_id) topk(${top_n:raw}, windows_process_working_set_bytes{job=\"windows_exporter\",instance=\"local\",process=~\"${process:regex}\",process_id=~\"${pid:regex}\",process!~\"^(Idle|_Total)$\"})) * 1000",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "process": 0,
+              "process_id": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "process": "Process",
+              "process_id": "PID"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

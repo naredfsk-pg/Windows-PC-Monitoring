@@ -1,0 +1,17 @@
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+*.local.env
+*.local.psd1
+
+# Runtime data, downloaded artifacts, and local diagnostics
+/data/
+/logs/
+/downloads/
+/backups/
+/config/generated/
+/artifacts/local/
+
+# Local agent coordination state
+/.axon/

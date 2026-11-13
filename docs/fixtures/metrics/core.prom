@@ -1,0 +1,33 @@
+# Synthetic schema fixture; no values or identities copied from a real machine.
+# TYPE windows_cpu_time_seconds_total counter
+windows_cpu_time_seconds_total{core="0,0",mode="idle"} 100
+windows_cpu_time_seconds_total{core="0,1",mode="idle"} 100
+# TYPE windows_memory_physical_total_bytes gauge
+windows_memory_physical_total_bytes 8589934592
+# TYPE windows_memory_available_bytes gauge
+windows_memory_available_bytes 4294967296
+# TYPE windows_process_cpu_time_seconds_total counter
+windows_process_cpu_time_seconds_total{process="example_app",process_id="100",mode="user"} 10
+windows_process_cpu_time_seconds_total{process="example_app",process_id="100",mode="privileged"} 5
+# TYPE windows_process_start_time_seconds_timestamp gauge
+windows_process_start_time_seconds_timestamp{process="example_app",process_id="100"} 1700000000
+# TYPE windows_process_working_set_bytes gauge
+windows_process_working_set_bytes{process="example_app",process_id="100"} 104857600
+# TYPE windows_process_working_set_private_bytes gauge
+windows_process_working_set_private_bytes{process="example_app",process_id="100"} 52428800
+# TYPE windows_process_private_bytes gauge
+windows_process_private_bytes{process="example_app",process_id="100"} 157286400
+# TYPE windows_logical_disk_free_bytes gauge
+windows_logical_disk_free_bytes{volume="C:"} 107374182400
+# TYPE windows_logical_disk_size_bytes gauge
+windows_logical_disk_size_bytes{volume="C:"} 214748364800
+# TYPE windows_net_bytes_received_total counter
+windows_net_bytes_received_total{nic="Example NIC"} 1000000
+# TYPE windows_net_bytes_sent_total counter
+windows_net_bytes_sent_total{nic="Example NIC"} 500000
+# TYPE windows_system_boot_time_timestamp gauge
+windows_system_boot_time_timestamp 1700000000
+# TYPE windows_exporter_collector_success gauge
+windows_exporter_collector_success{collector="cpu"} 1
+windows_exporter_collector_success{collector="memory"} 1
+windows_exporter_collector_success{collector="process"} 1
